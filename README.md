@@ -119,18 +119,19 @@ For season Finale:
 ```
   SEASON:
     name: SEASON
-    plex_all: true
-    filters:
-      label: Finale
+    plex_search:
+      all:
+        label: Finale
 ```
 
 For Final Episode:
 ```
   FINAL:
     name: FINAL
-    plex_all: true
+    plex_search:
+      all:
+        label: Finale
     filters:
-      label: Finale 
       tvdb_status:
            - Ended
            - Cancelled
