@@ -5,16 +5,17 @@ optionally labeling those shows in **Plex**. It can also filter out shows by gen
 
 I use this to label TV shows on my Plex server of which the season finale was recently added, which enables [**Kometa**](https://kometa.wiki/) to create an overlay for it.<br/>
 
-  ![ex3](https://github.com/user-attachments/assets/bb2e638a-d815-42f2-9c3c-cd2f09b8df1f)
-
-![overlay](https://github.com/user-attachments/assets/9a44dcc0-d3da-4bb1-8c65-bf8a35026067)
+  ![ex3](https://github.com/user-attachments/assets/bb2e638a-d815-42f2-9c3c-cd2f09b8df1f) ![overlay](https://github.com/user-attachments/assets/9a44dcc0-d3da-4bb1-8c65-bf8a35026067)
 
 ## What It Does
 
 1. **Fetches TV show data from Sonarr**  
    - Identifies each show’s **final season**.  
-   - Checks if the last episode of that season **aired** within the past `RECENT_DAYS` (or is in the **future** but already downloaded).  
+   - Checks if the last episode of that season **aired** within the past `RECENT_DAYS` (or is in the **future** but already downloaded).
+     - Important to note: This script assumes that the last episode of the season in Sonarr is the Season Finale. Mid-Season Finales will not be detected.
+       I chose this method over using the episode labels for finales found on tvdb/tmdb/trakt/?? because they are missing for many shows, especially less popular ones.
    - Splits them into **Downloaded** vs. **Not Downloaded** finales lists.
+
 
 2. **Optionally Skips Unmonitored or Certain Genres**  
    - If `SKIP_UNMONITORED` is `True`, the script ignores shows that are unmonitored in Sonarr.  
