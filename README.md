@@ -111,6 +111,12 @@ You need to fill in or adjust these variables:
   - Double-check `LABEL_SERIES_IN_PLEX = True`.  
   - Confirm your `PLEX_LIBRARY_TITLE` exactly matches the name of your Plex TV library.  
   - Ensure your Plex token (`PLEX_TOKEN`) is correct.
+- **Why not use the Finale labels available via tvdb/tmdb/trakt?**
+   
+These labels are applied manually by people and are missing for a considerable amount of shows, especially foreign and lesser popular ones.
+This approach avoids this issue, but has two downsides:
+1.  If the last episode of a season in Sonarr is NOT the season finale, then it will be wrongfully identified as one. (I did not find instances where this is the case but it is theoretically possible)
+2.  This script does not detect "mid-season finales"
 
 ## Kometa Overlay Config
 
