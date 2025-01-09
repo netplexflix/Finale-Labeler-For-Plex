@@ -486,7 +486,7 @@ if __name__ == "__main__":
                 print(line)
 
         if filtered_not_downloaded:
-            print(ORANGE + f"\nNot Downloaded Finales in the Last {RECENT_DAYS} Days  ({len(filtered_not_downloaded)}):" + RESET)
+            print(ORANGE + f"\nNot Downloaded Finales in the Last {RECENT_DAYS} Days matching criteria ({len(filtered_not_downloaded)}):" + RESET)
             for finale in filtered_not_downloaded:
                 if len(finale) == 9:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored, is_future = finale
