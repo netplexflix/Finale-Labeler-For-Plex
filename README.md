@@ -45,23 +45,26 @@ These overlays can serve as an easy visual indicator that the shows's Season Fin
 Open the script in any text editor (e.g., Notepad++) and look for the **Configuration** sections near the top.<br/>
 You need to fill in or adjust these variables:
 
-  - `SONARR_URL`
-  - `SONARR_API_KEY` 
-  - `PLEX_URL`
-  - `PLEX_TOKEN`
-  - `PLEX_LIBRARY_TITLE`
- 
-  - `RECENT_DAYS` (e.g., `14`)
-  - `SKIP_UNMONITORED` (`True`/`False`)
-  - `SKIP_GENRES` (`True`/`False`)  
-  - `GENRES_TO_SKIP` (array of genres seperated by comma, e.g. `["Talk Show", "Stand-Up", "Awards Show"]`)
-  - `SKIP_LABELS` (`True`/`False`)  
-  - `LABELS_TO_SKIP` (array of genres seperated by comma, e.g. `["Skip", "Exclude"]`)
+# Sonarr and Plex connection:
+  - `SONARR_URL`			Default: `http://localhost:8989/sonarr/api/v3`. Edit if needed
+  - `SONARR_API_KEY` 		Can be found in Sonarr under settings => General
+  - `PLEX_URL`				Default: `http://localhost:32400`. Edit if needed
+  - `PLEX_TOKEN`			[Finding your Plex token](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)  
+  - `PLEX_LIBRARY_TITLE`	Default: `TV Shows`. Edit if your TV show library is different
+
+# Criteria: 
+  - `RECENT_DAYS` (e.g., `14`). Timeframe in days within which the finale needs to have aired (Downloaded finales with future air dates will also be included).
+  
+  - `SKIP_UNMONITORED` (`True`/`False`). Ignore shows that are unmonitored in Sonarr.
+  - `SKIP_GENRES` (`True`/`False`). Ignore shows with genres specified with GENRES_TO_SKIP.  
+	- `GENRES_TO_SKIP` (array of genres seperated by comma, e.g. `["Talk Show", "Stand-Up", "Awards Show"]`)
+  - `SKIP_LABELS` (`True`/`False`). Ignore shows with labels specified with LABELS_TO_SKIP.  
+	- `LABELS_TO_SKIP` (array of genres seperated by comma, e.g. `["Skip", "Exclude"]`)
 
   - `LABEL_SERIES_IN_PLEX`: `True` (adds labels) or `False` (skip adding).
   - `PLEX_LABEL`: e.g. `"Finale"`.
   - `REMOVE_LABELS_IF_NO_LONGER_MATCHED` (`True`/`False`) (cleanup logic).
-  - `ONLY_FINALE_UNWATCHED` (`True`/`False`) (Label only shows where the finale episode itself is the only unwatched episode in the season)
+  - `ONLY_FINALE_UNWATCHED` (`True`/`False`) (Label only shows for which the finale episode itself is the only unwatched episode in the season)
 
 ## Installation & Usage
 
@@ -76,15 +79,15 @@ You need to fill in or adjust these variables:
      > **Tip**: If you see an error like `'pip' is not recognized`, try `python -m pip install requests plexapi` or `pip3 install requests plexapi` depending on your setup.
 
 3. **Edit & Run the Script**  
-   - Open the `.py` file in an editor. Adjust the **Configuration** variables (Sonarr, Plex, General) as described above.  
+   - Open the `.py` file in a text editor such as [***Notepad++***](https://notepad-plus-plus.org/). Adjust the **Configuration** variables (Sonarr, Plex, General) as described above.  
    - Save, then in your terminal:
      ```bash
      python Season-Finale-Label-Plex.v1.2.py
      ```
    - The script will:
      1. Connect to Sonarr and find your “recent” or future **downloaded** finales.  
-     2. Optionally skip shows in Plex by genre.  
-     3. Print “Downloaded Finales” and “Not Downloaded Finales.”
+     2. Optionally skip shows based on criteria.  
+     3. Print “Downloaded Finales” and “Not Downloaded Finales.” that match the criteria.
      4. Mark which Shows are unmonitored (If SKIP_UNMONITORED is set to false)
      5. Add/remove labels in Plex if configured.  
 
@@ -109,13 +112,8 @@ You need to fill in or adjust these variables:
 
 ---
 
-## Notes / Troubleshooting
+## Notes
 
-- **Plex token**: [Finding your Plex token](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)  
-- **Sonarr API Key**: Can be found in Sonarr under settings => General
-- **No labeling in Plex?**  
-  - Double-check `LABEL_SERIES_IN_PLEX = True`.   
-  - Ensure your Plex token (`PLEX_TOKEN`) is correct.
 - **Why not use the Finale labels available via tvdb/tmdb/trakt?**
    
 These labels are applied manually by people and are missing for a considerable amount of shows, especially foreign and lesser popular ones.
