@@ -45,14 +45,14 @@ These overlays can serve as an easy visual indicator that the shows's Season Fin
 Open the script in any text editor (e.g., Notepad++) and look for the **Configuration** sections near the top.<br/>
 You need to fill in or adjust these variables:
 
-# Sonarr and Plex connection:
+### Sonarr and Plex connection:
   - `SONARR_URL`			Default: `http://localhost:8989/sonarr/api/v3`. Edit if needed
   - `SONARR_API_KEY` 		Can be found in Sonarr under settings => General
   - `PLEX_URL`				Default: `http://localhost:32400`. Edit if needed
   - `PLEX_TOKEN`			[Finding your Plex token](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)  
   - `PLEX_LIBRARY_TITLE`	Default: `TV Shows`. Edit if your TV show library is different
 
-# Criteria: 
+### Criteria: 
   - `RECENT_DAYS` (e.g., `14`). Timeframe in days within which the finale needs to have aired (Downloaded finales with future air dates will also be included).
   
   - `SKIP_UNMONITORED` (`True`/`False`). Ignore shows that are unmonitored in Sonarr.
