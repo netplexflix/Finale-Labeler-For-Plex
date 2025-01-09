@@ -23,7 +23,6 @@ try:
 except ImportError:
     print("ERROR: python-plexapi is not installed. Run: pip install plexapi")
     sys.exit(1)
-	
 VERSION = '1.2'
 
 # --------------------------#
