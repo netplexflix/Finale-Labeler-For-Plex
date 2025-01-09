@@ -52,11 +52,14 @@ You need to fill in or adjust these variables:
   - `RECENT_DAYS` (e.g., `14`)
   - `SKIP_UNMONITORED` (`True`/`False`)
   - `SKIP_GENRES` (`True`/`False`)  
-  - `GENRES_TO_SKIP` (array of genres seperated by comma, e.g. `["Talkshow", "Stand-Up", "Awards Show"]`)
+  - `GENRES_TO_SKIP` (array of genres seperated by comma, e.g. `["Talk Show", "Stand-Up", "Awards Show"]`)
+  - `SKIP_LABELS` (`True`/`False`)  
+  - `LABELS_TO_SKIP` (array of genres seperated by comma, e.g. `["Skip", "Exclude"]`)
 
   - `LABEL_SERIES_IN_PLEX`: `True` (adds labels) or `False` (skip adding).
   - `PLEX_LABEL`: e.g. `"Finale"`.
-  - `REMOVE_LABELS_IF_NO_LONGER_MATCHED`: `True`/`False` (cleanup logic).
+  - `REMOVE_LABELS_IF_NO_LONGER_MATCHED` (`True`/`False`) (cleanup logic).
+  - 'ONLY_FINALE_UNWATCHED' (`True`/`False`) (Label only shows where the finale episode itself is the only unwatched episode in the season)
 
 ## Installation & Usage
 
@@ -74,7 +77,7 @@ You need to fill in or adjust these variables:
    - Open the `.py` file in an editor. Adjust the **Configuration** variables (Sonarr, Plex, General) as described above.  
    - Save, then in your terminal:
      ```bash
-     python Season-Finale-Label-Plex.py
+     python Season-Finale-Label-Plex.v1.2.py
      ```
    - The script will:
      1. Connect to Sonarr and find your “recent” or future **downloaded** finales.  
