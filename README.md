@@ -18,14 +18,16 @@ These overlays can serve as an easy visual indicator that the shows's Season Fin
    - Splits them into **Downloaded** vs. **Not Downloaded** finales lists.
 
 
-2. **Optionally Skips Unmonitored or Certain Genres**  
+2. **Optionally Filters/Skips shows based on the following criteria**  
    - If `SKIP_UNMONITORED` is `True`, the script ignores shows that are unmonitored in Sonarr.  
-   - If `SKIP_GENRES` is `True`, it checks **Plex** for any “skip” genres (`GENRES_TO_SKIP`) to exclude certain shows (e.g. “Talkshow,” “Stand-Up,” etc.).
+   - If `SKIP_GENRES` is `True`, it checks **Plex** for any “skip” genres (`GENRES_TO_SKIP`) to exclude certain shows (e.g. “Talk Show”,“Stand-Up”,"Award Show" etc.).
+   - If `SKIP_LABELS` is `True`, it checks **Plex* for any "skip" labels (`LABELS_TO_SKIP`) to exclude certain shows (e.g. "Skip","Exclude" etc)
+   - If `ONLY_FINALE_UNWATCHED` is 'True`, labels will only be applied if the identified finale episode is the only remaining unwatched episode that season.
 
 3. **Plex Labeling** (Optional) 
-   - **Adds** a label (e.g. `"Finale"`) to your matched shows if `LABEL_SERIES_IN_PLEX` is `True`.  
+   - **Adds** a label (e.g. `"Finale"`) to your matched shows if `LABEL_SERIES_IN_PLEX` is `True` and all skip criteria are met.  
    - If `REMOVE_LABELS_IF_NO_LONGER_MATCHED` is **also** `True`, it **removes** that label from shows that no longer match the “finale” criteria.  
-   - **Special Case**: If `LABEL_SERIES_IN_PLEX = False` but `REMOVE_LABELS_IF_NO_LONGER_MATCHED = True`, the script removes that label from **all** shows in Plex (essentially a cleanup scenario).
+   - **Special Case**: If `LABEL_SERIES_IN_PLEX = False` and `REMOVE_LABELS_IF_NO_LONGER_MATCHED = True`, the script removes that label from **all** shows in Plex (essentially a cleanup scenario).
 
 ## Requirements
 
@@ -59,7 +61,7 @@ You need to fill in or adjust these variables:
   - `LABEL_SERIES_IN_PLEX`: `True` (adds labels) or `False` (skip adding).
   - `PLEX_LABEL`: e.g. `"Finale"`.
   - `REMOVE_LABELS_IF_NO_LONGER_MATCHED` (`True`/`False`) (cleanup logic).
-  - 'ONLY_FINALE_UNWATCHED' (`True`/`False`) (Label only shows where the finale episode itself is the only unwatched episode in the season)
+  - `ONLY_FINALE_UNWATCHED` (`True`/`False`) (Label only shows where the finale episode itself is the only unwatched episode in the season)
 
 ## Installation & Usage
 
@@ -110,9 +112,9 @@ You need to fill in or adjust these variables:
 ## Notes / Troubleshooting
 
 - **Plex token**: [Finding your Plex token](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)  
+- **Sonarr API Key**: Can be found in Sonarr under settings => General
 - **No labeling in Plex?**  
-  - Double-check `LABEL_SERIES_IN_PLEX = True`.  
-  - Confirm your `PLEX_LIBRARY_TITLE` exactly matches the name of your Plex TV library.  
+  - Double-check `LABEL_SERIES_IN_PLEX = True`.   
   - Ensure your Plex token (`PLEX_TOKEN`) is correct.
 - **Why not use the Finale labels available via tvdb/tmdb/trakt?**
    
