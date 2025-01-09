@@ -29,13 +29,13 @@ VERSION = '1.2'
 # Configuration (Sonarr)    #
 # --------------------------#
 SONARR_URL = 'http://localhost:8989/sonarr/api/v3'  # Edit if needed
-SONARR_API_KEY = 'xxxxxxxxxxxxxxx'  				# Replace with your Sonarr API Key found under settings => General
+SONARR_API_KEY = 'xxxxxxxxxxxxxxx' 					# Replace with your Sonarr API Key found under settings => General
 
 # --------------------------#
 # Configuration (Plex)      #
 # --------------------------#
 PLEX_URL = "http://localhost:32400"     # Edit if needed
-PLEX_TOKEN = "xxxxxxxxxxxxxxx"   	  	# Replace with your Plex Token (see https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
+PLEX_TOKEN = "xxxxxxxxxxxxxxx"     		# Replace with your Plex Token (see https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
 PLEX_LIBRARY_TITLE = "TV Shows"         # Edit if needed
 
 # --------------------------#
@@ -59,7 +59,7 @@ Label logic:
  - If LABEL_SERIES_IN_PLEX = True and REMOVE_LABELS_IF_NO_LONGER_MATCHED = False => Add label to matched shows, does not remove label from unmatched shows
  - If LABEL_SERIES_IN_PLEX = False and REMOVE_LABELS_IF_NO_LONGER_MATCHED = True => Remove the label from ALL shows, also matched
  - If LABEL_SERIES_IN_PLEX = False and REMOVE_LABELS_IF_NO_LONGER_MATCHED = False => Do not add nor remove labels
- """
+"""
 
 # ANSI color codes
 GREEN = '\033[32m'
@@ -144,13 +144,22 @@ def get_recent_finales():
                 if cutoff_date <= air_date <= dt.now():
                     downloaded = is_episode_downloaded(last_ep['seasonNumber'], last_ep['episodeNumber'], s['id'])
                     if downloaded:
-                        finales_downloaded.append((s['title'], snum, last_ep['episodeNumber'], last_ep['title'], air_date.date(), tmdb_id, imdb_id, monitored))
+                        finales_downloaded.append((
+                            s['title'], snum, last_ep['episodeNumber'], last_ep['title'],
+                            air_date.date(), tmdb_id, imdb_id, monitored
+                        ))
                     else:
-                        finales_not_downloaded.append((s['title'], snum, last_ep['episodeNumber'], last_ep['title'], air_date.date(), tmdb_id, imdb_id, monitored))
+                        finales_not_downloaded.append((
+                            s['title'], snum, last_ep['episodeNumber'], last_ep['title'],
+                            air_date.date(), tmdb_id, imdb_id, monitored
+                        ))
                 elif air_date > dt.now():
                     downloaded = is_episode_downloaded(last_ep['seasonNumber'], last_ep['episodeNumber'], s['id'])
                     if downloaded:
-                        finales_downloaded.append((s['title'], snum, last_ep['episodeNumber'], last_ep['title'], air_date.date(), tmdb_id, imdb_id, monitored, True))
+                        finales_downloaded.append((
+                            s['title'], snum, last_ep['episodeNumber'], last_ep['title'],
+                            air_date.date(), tmdb_id, imdb_id, monitored, True
+                        ))
 
     return finales_downloaded, finales_not_downloaded
 
@@ -196,9 +205,9 @@ def get_plex_show_by_ids(imdb_id, tmdb_id, show_map):
             return show_map[candidate]
     return None
 
-def skip_show_for_genre(show_obj, skip_genres):
+def skip_show_for_genre(show_obj, genres_to_skip):
     show_genres_lower = [genre.tag.lower() for genre in show_obj.genres]
-    skip_genres_lower = [g.lower() for g in skip_genres]
+    skip_genres_lower = [g.lower() for g in genres_to_skip]
     for sg in skip_genres_lower:
         if sg in show_genres_lower:
             return True
@@ -349,16 +358,6 @@ def handle_label_logic(finales_downloaded):
 #   Update Check Functions       #
 # -------------------------------#
 def is_newer_version(remote_version, current_version):
-    """
-    Compare two version strings.
-    
-    Args:
-        remote_version (str): The version string from GitHub (e.g., '1.0.1').
-        current_version (str): The current version string of the script (e.g., '1.0.0').
-    
-    Returns:
-        bool: True if remote_version is newer than current_version, False otherwise.
-    """
     def parse_version(v):
         return [int(x) for x in v.strip('v').split('.')]
     
@@ -368,12 +367,6 @@ def is_newer_version(remote_version, current_version):
         return False
 
 def check_for_updates(current_version):
-    """
-    Check GitHub Releases for the latest version of the script.
-    
-    Args:
-        current_version (str): The current version string of the script.
-    """
     GITHUB_API_URL = "https://api.github.com/repos/netplexflix/Season-Finale-Label-Plex/releases/latest"
     try:
         response = requests.get(GITHUB_API_URL)
@@ -471,31 +464,39 @@ if __name__ == "__main__":
         print(BLUE + f"No finales aired in the last {RECENT_DAYS} days (or all were skipped by genre, label, and unwatched condition)." + RESET)
     else:
         if filtered_downloaded:
-            print(GREEN + f"Downloaded Finales in the Last {RECENT_DAYS} Days matching criteria ({len(filtered_downloaded)}):" + RESET)
+            print(GREEN + f"Downloaded Finales in the Last {RECENT_DAYS} Days ({len(filtered_downloaded)}):" + RESET)
             for finale in filtered_downloaded:
                 if len(finale) == 9:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored, is_future = finale
-                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date}"
-                            f" | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    if is_future:
+                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' "
+                                f"{BLUE}will air on {air_date}{RESET} | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    else:
+                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
+                                f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
                 elif len(finale) == 8:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored = finale
-                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date}"
-                            f" | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
+                            f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
                 if not monitored and not SKIP_UNMONITORED:
                     line += f" {BLUE}(UNMONITORED){RESET}"
                 print(line)
 
         if filtered_not_downloaded:
-            print(ORANGE + f"\nNot Downloaded Finales in the Last {RECENT_DAYS} Days matching criteria ({len(filtered_not_downloaded)}):" + RESET)
+            print(ORANGE + f"\nNot Downloaded Finales in the Last {RECENT_DAYS} Days ({len(filtered_not_downloaded)}):" + RESET)
             for finale in filtered_not_downloaded:
                 if len(finale) == 9:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored, is_future = finale
-                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date}"
-                            f" | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    if is_future:
+                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' "
+                                f"{BLUE}will air on {air_date}{RESET} | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    else:
+                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
+                                f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
                 elif len(finale) == 8:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored = finale
-                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date}"
-                            f" | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
+                            f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
                 if not monitored and not SKIP_UNMONITORED:
                     line += f" {BLUE}(UNMONITORED){RESET}"
                 print(line)
@@ -512,4 +513,3 @@ if __name__ == "__main__":
     elapsed_seconds = int(end_time - start_time)  # Truncate decimals
     formatted_duration = str(datetime.timedelta(seconds=elapsed_seconds))
     print(f"Total runtime: {formatted_duration}\n")
-
