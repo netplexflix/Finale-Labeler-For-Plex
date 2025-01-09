@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This script checks Sonarr for TV shows where a season finale was downloaded within the set timeframe,
+This script checks Sonarr for TV shows for which a season finale was downloaded within the set timeframe,
 and optionally labels/unlabels these shows in Plex based on the chosen criteria.
 The added labels can then be used to apply overlays like "Season Finale" or "Final Episode" using Kometa)
 

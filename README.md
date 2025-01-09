@@ -1,10 +1,9 @@
 # TV Show Season Finale Label Script
 
-This script checks [**Sonarr**](https://sonarr.tv/) for TV shows for which a **season finale** was downloaded which aired within the chosen timeframe, 
-optionally labeling those shows in **Plex**. It can also filter out shows by genre in Plex and remove labels no longer matched.
-
-I use this to label TV shows on my Plex server of which the season finale was recently added, which enables [**Kometa**](https://kometa.wiki/) to create an overlay for it.<br/>
-The overlay serves as an easy visual indicator that the shows's Season Finale or Final Episode has been added to my Plex.
+This script checks [**Sonarr**](https://sonarr.tv/) for TV shows for which a season finale was downloaded within the set timeframe,
+and optionally labels/unlabels these shows in Plex based on chosen criteria.
+The added labels can then be used to apply overlays like "Season Finale" or "Final Episode" using Kometa[**Kometa**](https://kometa.wiki/)
+These overlays can serve as an easy visual indicator that the shows's Season Finale or Final Episode has been added to your Plex.
 
   ![ex3](https://github.com/user-attachments/assets/bb2e638a-d815-42f2-9c3c-cd2f09b8df1f) ![overlay](https://github.com/user-attachments/assets/9a44dcc0-d3da-4bb1-8c65-bf8a35026067)
 
