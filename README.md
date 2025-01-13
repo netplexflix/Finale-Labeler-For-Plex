@@ -226,7 +226,10 @@ For Final Episode:
       all:
         label: mid_season_finale
 ```
-<br/>
+Overlays Example:
+
+![ex overlays](https://github.com/user-attachments/assets/1f86d4fa-d9e7-4f12-b452-1af4652c417b)
+
 <br/>
 <br/>
 
