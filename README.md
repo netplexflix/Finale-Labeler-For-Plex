@@ -193,6 +193,39 @@ For Final Episode:
       all:
         label: series_finale
 ```
+
+### Using both methods for best results:
+```
+  SEASON:
+    overlay:
+      name: SEASON
+      file: config/overlays/SEASON.png
+    plex_search:
+      all:
+        label: Finale
+
+  FINAL:
+    suppress_overlays: SEASON
+    overlay:
+      name: FINAL
+      file: config/overlays/FINAL.png
+    plex_search:
+      all:
+        label: Finale
+    filters:
+      tmdb_status:
+           - ended
+           - canceled
+
+  MIDSEASON:
+    suppress_overlays: SEASON
+    overlay:
+      name: MIDSEASON
+      file: config/overlays/MIDSEASON.png
+    plex_search:
+      all:
+        label: mid_season_finale
+```
 <br/>
 <br/>
 <br/>
