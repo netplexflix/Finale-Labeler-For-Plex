@@ -178,7 +178,7 @@ For Season Finale:
 
 For Mid-Season Finale:
 ```
-  FINAL:
+  MIDSEASON:
     name: MIDSEASON
     plex_search:
       all:
