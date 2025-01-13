@@ -1,0 +1,34 @@
+sonarr:
+  url: 'http://localhost:8989/sonarr/api/v3'
+  api_key: 'YOUR_SONARR_API_KEY'
+
+trakt:
+  client_id: "YOUR_TRAKT_API_CLIENT_ID"
+  client_secret: "YOUR_TRAKT_API_CLIENT_SECRET"
+  desired_episode_types: #these episode types will be used as the labels to be applied in Plex
+    - "mid_season_finale"
+    - "season_finale"
+    - "series_finale"
+
+plex:
+  url: 'http://localhost:32400'
+  token: 'YOUR_PLEX_TOKEN'
+  library_title: 'TV Shows'
+
+general:
+  recent_days: 14
+  skip_unmonitored: true
+  skip_genres: true
+  genres_to_skip:
+    - "Talk Show"
+    - "News"
+    - "Stand-Up"
+    - "Awards Show"
+  skip_labels: true
+  labels_to_skip:
+    - "Skip"
+    - "Exclude"
+  label_series_in_plex: true
+  plex_label: "Finale"
+  remove_labels_if_no_longer_matched: true
+  only_finale_unwatched: false
