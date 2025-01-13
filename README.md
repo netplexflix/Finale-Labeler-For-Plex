@@ -173,7 +173,7 @@ For Season Finale:
     name: SEASON
     plex_search:
       all:
-        label: mid_season_finale
+        label: season_finale
 ```
 
 For Mid-Season Finale:
@@ -182,7 +182,7 @@ For Mid-Season Finale:
     name: MIDSEASON
     plex_search:
       all:
-        label: series_finale
+        label: mid_season_finale
 ```
 
 For Final Episode:
