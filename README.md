@@ -1,4 +1,4 @@
-# Plex Finale Labeler
+# 📺 Finale Labeler for Plex ✅
 
 This script checks your Plex TV library and lists your TV shows for which a (season) finale is present which aired within the set timeframe, <br/>
 and optionally labels/unlabels these shows in Plex based on chosen criteria.<br/>
@@ -10,7 +10,9 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 
 ![github example](https://github.com/user-attachments/assets/ba858c1f-3408-4103-9f46-73dcb6811ace)
 
-## What It Does
+---
+
+## ✨ What It Does
 
 1. **One, or both, of two methods are used:** <br/>
 - **METHOD 1: Sonarr**:<br/>
@@ -28,7 +30,6 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 	>**-** 'finale' flags are currently missing for many shows, especially less popular and foreign ones<br/>
 	>**-** Could incorrectly identify finale episode if info on Trakt is wrong<br/>
 	>**-** Slower
-
 
 2. **Optionally Filters/Skips shows based on the following criteria**  
 	- If `Skip_Unmonitored` is `True`, the script ignores shows that are unmonitored in Sonarr.  (When using Method 1)
@@ -50,7 +51,9 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 > [!TIP]  
 > **Special Case**: If `label_series_in_plex = False` and `remove_labels_if_no_longer_matched = True`, the script removes the labels from **all** shows in Plex (essentially a cleanup scenario).
 
-## Requirements
+---
+
+## 📝 Requirements
 
 - **Plex** with a valid Plex token.
 - **[Sonarr](https://sonarr.tv/)** (Required for Method 1)
@@ -58,8 +61,9 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 - **Python 3.7+**      
 - **dependencies** Can be installed using the requirements.txt (See "Installation & Usage" below)
 
+---
 
-## Configuration
+## ⚙️ Configuration
 
 Open config.yml in any text editor (e.g., Notepad++).<br/>
 You need to fill in or adjust the variables:
@@ -89,7 +93,9 @@ You need to fill in or adjust the variables:
   - `remove_labels_if_no_longer_matched` (`true`/`false`) Removes the label set under `plex_label` if using Method 1, or labels set under `desired_episode_types` if using Method 2 for any show that no longer qualifies for it.
   - `only_finale_unwatched` (`true`/`false`) Label only shows for which the finale episode itself is the only unwatched episode in the season.
 
-## Installation & Usage
+---
+
+## 🚀 Installation & Usage
 
 > [!IMPORTANT]
 > Make sure you first correctly edit the **Configuration** variables (Sonarr, Trakt, Plex, General) as described above.
@@ -113,18 +119,18 @@ In your terminal, make sure you are in your script path and type:
 > Windows users can create a batch file to quickly launch the script:
 > Open a text editor, paste the following code and Save as a .bat file
 > (Edit the paths to the python.exe and your PFL.py according to where they are on your computer.)
+>  ```bash
+>  "C:\Users\User1\AppData\Local\Programs\Python\Python311\python.exe" "C:\Scripts\Finale\PFL.py" -r
+>  pause
+>  ```
 
-  ```bash
-  "C:\Users\User1\AppData\Local\Programs\Python\Python311\python.exe" "C:\Scripts\Finale\PFL.py" -r
-  pause
-  ```
 > [!IMPORTANT]
 > If you want to schedule this script (for example right before your kometa is sheduled to run) then use the Sonarr.py and/or Trakt.py scripts found in the Modules folder, depending on which method(s) you want to schedule.<br/>
 > PFL.py only functions as the method selector intended for manual runs.
 
 ---
 
-## Notes
+## 📜 Notes
 
 - **Which Method should I use?**
    
@@ -137,7 +143,8 @@ The 'finale' labels found via Trakt are applied manually by people and are missi
 Using Method 2 will make it very unlikely an episode is incorrectly identified as a finale, but will result in more Shows being looked over.
 
 ---
-## Kometa Overlay Configs
+
+## ☄️ Kometa Overlay Configs
 
 You can use the following logic examples to add overlays with Kometa:
 
