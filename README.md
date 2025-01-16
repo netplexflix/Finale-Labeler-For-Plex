@@ -237,8 +237,12 @@ Overlays Example:
 
 ![ex overlays](https://github.com/user-attachments/assets/1f86d4fa-d9e7-4f12-b452-1af4652c417b)
 
-<br/>
-<br/>
+---
 
+### ⚠️ **Do you Need Help or have Feedback?**
+- Join the [Discord](https://discord.gg/sWQ5m2qM).
+- Open an [Issue](https://github.com/netplexflix/Finale-Labeler-For-Plex/issues) on GitHub.
+
+---
 
 [!["Buy Me A Coffee"](https://github.com/user-attachments/assets/5c30b977-2d31-4266-830e-b8c993996ce7)](https://www.buymeacoffee.com/neekokeen)
