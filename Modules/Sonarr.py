@@ -8,6 +8,41 @@ import re
 import time
 import datetime
 from datetime import timedelta, datetime as dt
+from pathlib import Path
+from path_handler import PathHandler
+
+# Set up logging
+script_name = os.path.splitext(os.path.basename(__file__))[0]  # Get script name without extension
+logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Logs", script_name)
+os.makedirs(logs_dir, exist_ok=True)
+log_file = os.path.join(logs_dir, f"log_{dt.now().strftime('%Y%m%d_%H%M%S')}.txt")
+
+class Logger:
+    def __init__(self, log_file):
+        self.terminal = sys.stdout
+        self.log = open(log_file, "a", encoding="utf-8")  # Specify UTF-8 encoding
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
+
+sys.stdout = Logger(log_file)
+sys.stderr = Logger(log_file)
+
+# Clean up old logs
+def clean_old_logs():
+    log_files = sorted(
+        [os.path.join(logs_dir, f) for f in os.listdir(logs_dir) if f.startswith("log_")],
+        key=os.path.getmtime
+    )
+    while len(log_files) > 31:
+        os.remove(log_files.pop(0))
+
+clean_old_logs()
 
 import requests
 try:
@@ -25,13 +60,14 @@ RESET = '\033[0m'
 
 # Load configuration from config.yml in parent folder
 def load_config():
-    # Determine the directory where this script resides
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Construct the path to config.yml in the parent folder
-    config_path = os.path.join(current_dir, "..", "config.yml")
+    current_dir = Path(__file__).parent
+    config_path = current_dir.parent / "config.yml"
     try:
         with open(config_path, "r") as file:
-            return yaml.safe_load(file)
+            config = yaml.safe_load(file)
+            global path_handler
+            path_handler = PathHandler(config)
+            return config
     except FileNotFoundError:
         print(f"{RED}ERROR: Could not find config.yml at {config_path}.{RESET}")
         sys.exit(1)
@@ -85,7 +121,9 @@ def is_episode_downloaded(season_number, episode_number, series_id):
     episode_files = resp.json()
     needle = f"s{season_number:02d}e{episode_number:02d}"
     for ef in episode_files:
-        if needle in ef.get('relativePath', '').lower() and ef.get('size', 0) > 0:
+        # Map the path from Sonarr to local system
+        relative_path = path_handler.map_path(ef.get('relativePath', ''))
+        if needle in relative_path.lower() and ef.get('size', 0) > 0:
             return True
     return False
 
@@ -464,8 +502,6 @@ if __name__ == "__main__":
     print("\n=== Label Operations ===")
     # Label logic
     handle_label_logic(filtered_downloaded)
-
-    print("\nRun completed")
 
     end_time = time.time()
     elapsed_seconds = int(end_time - start_time)  # Truncate decimals

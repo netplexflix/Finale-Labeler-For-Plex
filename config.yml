@@ -16,6 +16,7 @@ plex:
   library_title: 'TV Shows'
 
 general:
+  launch_method: 0 #0=menu, 1=Sonarr, 2=Trakt, 3=Both consecutively
   recent_days: 14
   skip_unmonitored: true
   skip_genres: true
@@ -32,3 +33,13 @@ general:
   plex_label: "Finale"
   remove_labels_if_no_longer_matched: true
   only_finale_unwatched: false
+
+paths:
+  path_mappings:
+    # Examples:
+    # windows_to_nas:
+    #   "D:/Media/": "/volume1/Media/"
+    # docker_to_nas:
+    #   "/tv": "/volume1/Media/TV Shows"
+    # Set your platform: 'windows', 'linux', 'nas', or 'docker'
+  platform: "windows"

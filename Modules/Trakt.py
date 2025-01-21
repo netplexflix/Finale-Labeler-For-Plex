@@ -1,14 +1,52 @@
 import requests
 import os
+import sys
 import yaml
 from plexapi.server import PlexServer
 from tqdm import tqdm  # For displaying progress bars
 from datetime import datetime, timedelta
 import time
-from colorama import init, Fore, Style
 
-# Initialize colorama
-init(autoreset=True)
+# ANSI color codes
+GREEN = '\033[32m'
+ORANGE = '\033[33m'
+BLUE = '\033[34m'
+RED = '\033[31m'
+RESET = '\033[0m'
+BOLD = '\033[1m'
+
+# Set up logging
+script_name = os.path.splitext(os.path.basename(__file__))[0]  # Get script name without extension
+logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Logs", script_name)
+os.makedirs(logs_dir, exist_ok=True)
+log_file = os.path.join(logs_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+
+class Logger:
+    def __init__(self, log_file):
+        self.terminal = sys.stdout
+        self.log = open(log_file, "a", encoding="utf-8")  # Specify UTF-8 encoding
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
+
+sys.stdout = Logger(log_file)
+sys.stderr = Logger(log_file)
+
+# Clean up old logs
+def clean_old_logs():
+    log_files = sorted(
+        [os.path.join(logs_dir, f) for f in os.listdir(logs_dir) if f.startswith("log_")],
+        key=os.path.getmtime
+    )
+    while len(log_files) > 31:
+        os.remove(log_files.pop(0))
+
+clean_old_logs()
 
 # ============================
 # Load Configuration from config.yml
@@ -63,7 +101,7 @@ def connect_plex(plex_url, plex_token, library_title):
         library = plex.library.section(library_title)
         return library, plex
     except Exception as e:
-        print(f"{Fore.RED}Failed to connect to Plex: {e}{Style.RESET_ALL}")
+        print(f"{RED}Failed to connect to Plex: {e}{RESET}")
         exit(1)
 
 def get_all_tv_shows(library):
@@ -74,7 +112,7 @@ def get_all_tv_shows(library):
         shows = library.all()
         return shows
     except Exception as e:
-        print(f"{Fore.RED}Failed to retrieve TV shows from Plex: {e}{Style.RESET_ALL}")
+        print(f"{RED}Failed to retrieve TV shows from Plex: {e}{RESET}")
         return []
 
 def get_last_episode(show):
@@ -103,7 +141,7 @@ def get_last_episode(show):
 
         return (season_number, episode_number, episode_title)
     except Exception as e:
-        print(f"{Fore.RED}Failed to get last episode for show '{show.title}': {e}{Style.RESET_ALL}")
+        print(f"{RED}Failed to get last episode for show '{show.title}': {e}{RESET}")
         return None
 
 def search_trakt_show(show_title, client_id):
@@ -146,11 +184,11 @@ def search_trakt_show(show_title, client_id):
 
     except requests.exceptions.HTTPError as http_err:
         if http_err.response.status_code != 404:
-            print(f"{Fore.RED}HTTP error occurred while searching Trakt for '{show_title}': {http_err}{Style.RESET_ALL}")
+            print(f"{RED}HTTP error occurred while searching Trakt for '{show_title}': {http_err}{RESET}")
             print(f"Response Status Code: {http_err.response.status_code}")
-            print(f"Response Body: {http_err.response.text}{Style.RESET_ALL}")
+            print(f"Response Body: {http_err.response.text}{RESET}")
     except Exception as err:
-        print(f"{Fore.RED}An error occurred while searching Trakt for '{show_title}': {err}{Style.RESET_ALL}")
+        print(f"{RED}An error occurred while searching Trakt for '{show_title}': {err}{RESET}")
 
     return None
 
@@ -193,7 +231,7 @@ def get_episode_details(trakt_identifier, season, episode, client_id):
                     # Example format without milliseconds: '2024-03-21T07:00:00Z'
                     first_aired = datetime.strptime(first_aired_str, "%Y-%m-%dT%H:%M:%SZ")
                 except ValueError:
-                    print(f"{Fore.RED}Unable to parse date '{first_aired_str}' for Trakt episode.{Style.RESET_ALL}")
+                    print(f"{RED}Unable to parse date '{first_aired_str}' for Trakt episode.{RESET}")
                     first_aired = None
         else:
             first_aired = None
@@ -202,11 +240,11 @@ def get_episode_details(trakt_identifier, season, episode, client_id):
 
     except requests.exceptions.HTTPError as http_err:
         if http_err.response.status_code != 404:
-            print(f"{Fore.RED}HTTP error occurred while fetching episode details from Trakt: {http_err}{Style.RESET_ALL}")
+            print(f"{RED}HTTP error occurred while fetching episode details from Trakt: {http_err}{RESET}")
             print(f"Response Status Code: {http_err.response.status_code}")
-            print(f"Response Body: {http_err.response.text}{Style.RESET_ALL}")
+            print(f"Response Body: {http_err.response.text}{RESET}")
     except Exception as err:
-        print(f"{Fore.RED}An error occurred while fetching episode details from Trakt: {err}{Style.RESET_ALL}")
+        print(f"{RED}An error occurred while fetching episode details from Trakt: {err}{RESET}")
 
     return None
 
@@ -230,9 +268,9 @@ def add_label_to_show(show, label):
         return True  # Indicate that label was added
 
     except AttributeError:
-        print(f"{Fore.RED}The 'addLabel' method does not exist for show '{show.title}'. Please verify the Plex API version and method availability.{Style.RESET_ALL}")
+        print(f"{RED}The 'addLabel' method does not exist for show '{show.title}'. Please verify the Plex API version and method availability.{RESET}")
     except Exception as e:
-        print(f"{Fore.RED}Failed to add label '{label}' to show '{show.title}': {e}{Style.RESET_ALL}")
+        print(f"{RED}Failed to add label '{label}' to show '{show.title}': {e}{RESET}")
 
     return False  # Indicate that label was not added
 
@@ -256,9 +294,9 @@ def remove_label_from_show(show, label):
         return True  # Indicate that label was removed
 
     except AttributeError:
-        print(f"{Fore.RED}The 'removeLabel' method does not exist for show '{show.title}'. Please verify the Plex API version and method availability.{Style.RESET_ALL}")
+        print(f"{RED}The 'removeLabel' method does not exist for show '{show.title}'. Please verify the Plex API version and method availability.{RESET}")
     except Exception as e:
-        print(f"{Fore.RED}Failed to remove label '{label}' from show '{show.title}': {e}{Style.RESET_ALL}")
+        print(f"{RED}Failed to remove label '{label}' from show '{show.title}': {e}{RESET}")
 
     return False  # Indicate that label was not removed
 
@@ -272,17 +310,17 @@ def main():
     print(f"Desired Episode Types: {DESIRED_EPISODE_TYPES}")
 
     # Print Skip Genres along with Genres to Skip on the same line
-    genre_color = Fore.GREEN if SKIP_GENRES else Fore.YELLOW
-    print(f"Skip Genres: {genre_color}{SKIP_GENRES}{Style.RESET_ALL}  {GENRES_TO_SKIP}")
+    genre_color = GREEN if SKIP_GENRES else ORANGE
+    print(f"Skip Genres: {genre_color}{SKIP_GENRES}{RESET}  {GENRES_TO_SKIP}")
 
     # Print Skip Labels along with Labels to Skip on the same line
-    label_color = Fore.GREEN if SKIP_LABELS else Fore.YELLOW
-    print(f"Skip Labels: {label_color}{SKIP_LABELS}{Style.RESET_ALL}  {LABELS_TO_SKIP}")
+    label_color = GREEN if SKIP_LABELS else ORANGE
+    print(f"Skip Labels: {label_color}{SKIP_LABELS}{RESET}  {LABELS_TO_SKIP}")
 
     # For the remaining boolean configuration variables, print using colors
     def print_bool(var_name, var_value):
-        color = Fore.GREEN if var_value else Fore.YELLOW
-        print(f"{var_name}: {color}{var_value}{Style.RESET_ALL}")
+        color = GREEN if var_value else ORANGE
+        print(f"{var_name}: {color}{var_value}{RESET}")
 
     print_bool("Label in Plex:", LABEL_SERIES_IN_PLEX)
     print_bool("Remove Labels if No Longer Matched:", REMOVE_LABELS_IF_NO_LONGER_MATCHED)
@@ -370,7 +408,7 @@ def main():
             air_status = f"aired on {first_aired.strftime('%Y-%m-%d')}"
         else:
             # Episode is scheduled to air in the future; include regardless of days
-            air_status = f"{Fore.BLUE}will air on{Style.RESET_ALL} {first_aired.strftime('%Y-%m-%d')}"
+            air_status = f"{BLUE}will air on{RESET} {first_aired.strftime('%Y-%m-%d')}"
 
         # Check if episode_type is one of the desired types
         if episode_type and episode_type.lower() in [etype.lower() for etype in DESIRED_EPISODE_TYPES]:
@@ -461,7 +499,7 @@ def main():
                             if removed:
                                 labels_removed.append((show.title, label))
                         except Exception as e:
-                            print(f"{Fore.RED}Error removing label '{label}' from show '{show.title}': {e}{Style.RESET_ALL}")
+                            print(f"{RED}Error removing label '{label}' from show '{show.title}': {e}{RESET}")
             else:
                 # Standard logic: Remove outdated labels for non-qualifying shows
                 qualifying_show_titles = set([show['title'] for show in qualifying_shows])
@@ -479,13 +517,13 @@ def main():
                             if removed:
                                 labels_removed.append((show.title, label))
                         except Exception as e:
-                            print(f"{Fore.RED}Error removing label '{label}' from show '{show.title}': {e}{Style.RESET_ALL}")
+                            print(f"{RED}Error removing label '{label}' from show '{show.title}': {e}{RESET}")
         except Exception as e:
-            print(f"{Fore.RED}An error occurred while removing outdated labels: {e}{Style.RESET_ALL}")
+            print(f"{RED}An error occurred while removing outdated labels: {e}{RESET}")
 
     # Step 7: Display the qualifying shows
     if qualifying_shows:
-        print(f"\n{Fore.GREEN}=== Qualifying TV Shows with Finale Episodes === {Style.RESET_ALL}")
+        print(f"\n{GREEN}=== Qualifying TV Shows with Finale Episodes === {RESET}")
         for item in qualifying_shows:
             imdb_display = item['imdb_id'] if item['imdb_id'] else "N/A"
             tmdb_display = item['tmdb_id'] if item['tmdb_id'] else "N/A"
@@ -493,7 +531,7 @@ def main():
                   f"Season {item['season']} Episode {item['episode']} '{item['episode_title']}' "
                   f"({item['episode_type']}) {item['air_status']}")
     else:
-        print(f"\n{Fore.BLUE}No TV shows found matching criteria.{Style.RESET_ALL}")
+        print(f"\n{BLUE}No TV shows found matching criteria.{RESET}")
         print("========================\n")
 
     # Step 8: Display label operations
@@ -503,24 +541,23 @@ def main():
         # Display labels added
         if labels_added:
             for title, label in labels_added:
-                print(f"{Fore.GREEN}+ Added label '{label}' to show '{title}'{Style.RESET_ALL}")
+                print(f"{GREEN}+ Added label '{label}' to show '{title}'{RESET}")
         
         # Display labels that already existed
         if labels_existed:
             for title, label in labels_existed:
-                print(f"{Fore.YELLOW}= Label '{label}' already exists for show '{title}'{Style.RESET_ALL}")
+                print(f"{ORANGE}= Label '{label}' already exists for show '{title}'{RESET}")
         
         # Display labels removed
         if labels_removed:
             for title, label in labels_removed:
-                print(f"{Fore.RED}- Removed label '{label}' from show '{title}'{Style.RESET_ALL}")
+                print(f"{RED}- Removed label '{label}' from show '{title}'{RESET}")
 
     # Step 9: Print runtime
     end_time = time.time()
     runtime_seconds = int(end_time - start_time)
     hours, remainder = divmod(runtime_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    print("\nRun completed")
     print(f"Runtime: {hours:02}:{minutes:02}:{seconds:02}")
 
 if __name__ == "__main__":
