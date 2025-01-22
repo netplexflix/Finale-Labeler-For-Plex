@@ -14,7 +14,7 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 
 ## ✨ What It Does
 
-1. **One, or both, of two methods are used:** <br/>
+1. ☑ **One, or both, of two methods are used:** <br/>
 - **METHOD 1: Sonarr**:<br/>
   Uses [**Sonarr**](https://sonarr.tv/) to identify Shows for which the last episode of a season was downloaded.
    
@@ -31,19 +31,19 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 	>**-** Could incorrectly identify finale episode if info on Trakt is wrong<br/>
 	>**-** Slower
 
-2. **Optionally Filters/Skips shows based on the following criteria**  
+2. ▼ **Optionally Filters/Skips shows based on the following criteria**  
 	- If `Skip_Unmonitored` is `True`, the script ignores shows that are unmonitored in Sonarr.  (When using Method 1)
 	- If `Skip_Genres` is `True`, it checks Plex for genres (`Genres_to_Skip`) to exclude certain shows (e.g. “Talk Show”,“Stand-Up”,"Award Show" etc.).
 	- If `Skip_Labels` is `True`, it checks Plex for labels (`Labels_to_Skip`) to exclude certain shows (e.g. "Skip","Exclude" etc)
 	- If `Only_Finale_Unwatched` is `True`, only include shows for which the identified finale episode is the only remaining unwatched episode that season.
 
-3. **Lists the Qualifying TV Shows**
+3. 📋 **Lists the Qualifying TV Shows**
 	- The script will show you a list of TV Shows on your Plex that qualify the set criteria.
 	- When using Method 1 (Sonarr) it will also
 		- Mark Unmonitored shows (in case `Skip_Unmonitored` was set to false).
  		- Show a seperate list of aired finales (matching the criteria) which you haven't downloaded yet.
  
-4. **Adds/Removes labels in Plex on TV Show level** (Optional) 
+4. ✏️ **Adds/Removes labels in Plex on TV Show level** (Optional) 
 	- **Adds** labels to your matched shows if `Label_series_in_plex` is `True` and all criteria are met.<br/>
 		- Method 1 (Sonarr) applies the label chosen under `plex_label` <br/>
 	 	- Method 2 (Trakt) applies the `episode_status` as label to differentiate between the possible statuses (mid_season_finale, season_finale and series_finale by default)
@@ -81,17 +81,22 @@ You need to fill in or adjust the variables:
   - `library_title`		Default: `TV Shows`. Edit if your TV show library is named differently.
 
 ### General: 
-  - `recent_days` (e.g., `14`). Timeframe in days within which the finale needs to have aired (Downloaded finales with future air dates will also be included).
-  - `skip_unmonitored` (`true`/`false`). Ignore shows that are unmonitored in Sonarr. (Only used by Method 1)
-  - `skip_genres` (`true`/`false`). Ignore shows with genres specified with `genres_to_skip`.  
-	- `genres_to_skip` (which genres to skip)
-  - `skip_labels` (`true`/`false`). Ignore shows with labels specified with `labels_to_skip`.  
-	- `labels_to_skip` (which labels to skip)
+  - **launch_method:** `0`=launches a menu, `1`=runs Sonarr method, `2`= runs Trakt method, `3`= runs both consecutively
+  - **recent_days:** (e.g., `14`). Timeframe in days within which the finale needs to have aired (Downloaded finales with future air dates will also be included).
+  - **skip_unmonitored:** (`true`/`false`). Ignore shows that are unmonitored in Sonarr. (Only used by Method 1)
+  - **skip_genres:** (`true`/`false`). Ignore shows with genres specified with `genres_to_skip`.  
+	- **genres_to_skip:** (which genres to skip)
+  - **skip_labels:** (`true`/`false`). Ignore shows with labels specified with `labels_to_skip`.  
+	- **labels_to_skip:** (which labels to skip)
 
-  - `label_series_in_plex`: (`true`/`false`). Whether or not to add labels to your TV Shows in Plex. If set to `false` the script will simply list the qualifying shows.
-  - `plex_label`: default `"Finale"`. Which label to apply when using Method 1 (Sonarr). When using Method 2 (Trakt), the types specified under `desired_episode_types` will be used as labels
-  - `remove_labels_if_no_longer_matched` (`true`/`false`) Removes the label set under `plex_label` if using Method 1, or labels set under `desired_episode_types` if using Method 2 for any show that no longer qualifies for it.
-  - `only_finale_unwatched` (`true`/`false`) Label only shows for which the finale episode itself is the only unwatched episode in the season.
+  - **label_series_in_plex:** (`true`/`false`). Whether or not to add labels to your TV Shows in Plex. If set to `false` the script will simply list the qualifying shows.
+  - **plex_label:** default `"Finale"`. Which label to apply when using Method 1 (Sonarr). When using Method 2 (Trakt), the types specified under `desired_episode_types` will be used as labels
+  - **remove_labels_if_no_longer_matched:** (`true`/`false`) Removes the label set under `plex_label` if using Method 1, or labels set under `desired_episode_types` if using Method 2 for any show that no longer qualifies for it.
+  - **only_finale_unwatched:** (`true`/`false`) Label only shows for which the finale episode itself is the only unwatched episode in the season.
+
+  - **path_mappings:** Map your paths if needed
+  - **platform:** The platform from which you are launching the script
+   > Example: Your Plex is looking for media on your NAS on path "/volume1/media/", and you have this path mapped in windows as "P:/", then you write `"P:/": "/volume1/media"` and under `platform:` you write `"windows"`
 
 ---
 
@@ -113,20 +118,19 @@ In your terminal, make sure you are in your script path and type:
 3. **Launch the Script**
 In your terminal, make sure you are in your script path and type:
      ```bash
-     python PFL.py
+     python FLFP.py
      ```
 > [!TIP]
 > Windows users can create a batch file to quickly launch the script:
 > Open a text editor, paste the following code and Save as a .bat file
-> (Edit the paths to the python.exe and your PFL.py according to where they are on your computer.)
+> (Edit the paths to the python.exe and your FLFP.py according to where they are on your computer.)
 >  ```bash
->  "C:\Users\User1\AppData\Local\Programs\Python\Python311\python.exe" "C:\Scripts\Finale\PFL.py" -r
+>  "C:\Users\User1\AppData\Local\Programs\Python\Python311\python.exe" "C:\Scripts\FLFP\FLFP.py" -r
 >  pause
 >  ```
 
 > [!IMPORTANT]
-> If you want to schedule this script (for example right before your kometa is sheduled to run) then use the Sonarr.py and/or Trakt.py scripts found in the Modules folder, depending on which method(s) you want to schedule.<br/>
-> PFL.py only functions as the method selector intended for manual runs.
+> Set launch_method to `1`,`2` or `3` depending on your desired method if you are scheduling the script, as `launch_method` `0` will prompt for a menu selection
 
 ---
 
