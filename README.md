@@ -65,11 +65,11 @@ Overlays can serve as an easy visual indicator that the shows's Season Finale or
 
 ## ⚙️ Configuration
 
-Open config.yml in any text editor (e.g., Notepad++).<br/>
+Rename `config.example.yml` to `config.yml` and open it in any text editor (e.g., Notepad++).<br/>
 You need to fill in or adjust the variables:
 
 ### Sonarr: (Needed for Method 1)
-  - `url`		Default: `http://localhost:8989/sonarr/api/v3`. Edit if needed
+  - `url`		Default: `http://localhost:8989`. Edit if needed
   - `api_key` 		Can be found in Sonarr under settings => General
 ### Trakt: (Needed for Method 2)
   - `client_id`			Found under [Your API Apps](https://trakt.tv/oauth/applications). See [HERE](https://trakt.docs.apiary.io/#introduction/create-an-app) for more info on how to get Trakt API credentials.
