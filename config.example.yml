@@ -1,5 +1,5 @@
 sonarr:
-  url: 'http://localhost:8989/sonarr/api/v3'
+  url: 'http://localhost:8989'
   api_key: 'YOUR_SONARR_API_KEY'
 
 trakt:

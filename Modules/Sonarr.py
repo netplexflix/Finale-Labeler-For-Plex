@@ -58,6 +58,23 @@ BLUE = '\033[34m'
 RED = '\033[31m'
 RESET = '\033[0m'
 
+def normalize_sonarr_url(url):
+    """Ensure Sonarr URL ends with /api/v3 but avoid doubling it."""
+    # Remove trailing slashes
+    url = url.rstrip('/')
+    
+    # Check if URL already ends with /api/v3
+    if not url.endswith('/api/v3'):
+        # If URL ends with /sonarr, just append /api/v3
+        if url.endswith('/sonarr'):
+            url = f"{url}/api/v3"
+        # If URL doesn't contain /sonarr at all, append /sonarr/api/v3
+        elif '/sonarr' not in url:
+            url = f"{url}/sonarr/api/v3"
+        # If URL contains /sonarr somewhere but not at the end, assume it's correct
+    
+    return url
+
 # Load configuration from config.yml in parent folder
 def load_config():
     current_dir = Path(__file__).parent
@@ -65,14 +82,29 @@ def load_config():
     try:
         with open(config_path, "r") as file:
             config = yaml.safe_load(file)
+            
+            # Normalize Sonarr URL
+            if 'sonarr' in config and 'url' in config['sonarr']:
+                config['sonarr']['url'] = normalize_sonarr_url(config['sonarr']['url'])
+            else:
+                print(f"{RED}ERROR: Sonarr URL not found in config.yml. Please check your configuration.{RESET}")
+                sys.exit(1)
+                
+            if not config['sonarr'].get('api_key'):
+                print(f"{RED}ERROR: Sonarr API key not found in config.yml. Please check your configuration.{RESET}")
+                sys.exit(1)
+            
             global path_handler
             path_handler = PathHandler(config)
             return config
     except FileNotFoundError:
         print(f"{RED}ERROR: Could not find config.yml at {config_path}.{RESET}")
         sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"{RED}ERROR: Invalid YAML format in config.yml: {str(e)}{RESET}")
+        sys.exit(1)
     except Exception as e:
-        print(f"{RED}ERROR: An error occurred while loading config.yml: {e}{RESET}")
+        print(f"{RED}ERROR: An error occurred while loading config.yml: {str(e)}{RESET}")
         sys.exit(1)
 
 config = load_config()
@@ -100,10 +132,42 @@ ONLY_FINALE_UNWATCHED = config['general']['only_finale_unwatched']
 #  Sonarr Finale Logic  #
 # ----------------------#
 def get_sonarr_series():
-    url = f"{SONARR_URL}/series?apikey={SONARR_API_KEY}"
-    resp = requests.get(url)
-    resp.raise_for_status()
-    return resp.json()
+    """Get all series from Sonarr with improved error handling."""
+    try:
+        url = f"{SONARR_URL}/series?apikey={SONARR_API_KEY}"
+        resp = requests.get(url, timeout=10)  # Add timeout
+        
+        # Handle common HTTP errors
+        if resp.status_code == 401:
+            print(f"{RED}ERROR: Invalid API key for Sonarr. Please check your config.yml{RESET}")
+            sys.exit(1)
+        elif resp.status_code == 404:
+            print(f"{RED}ERROR: Sonarr API not found at {SONARR_URL}. Please check your URL configuration.{RESET}")
+            sys.exit(1)
+        elif resp.status_code != 200:
+            print(f"{RED}ERROR: Sonarr returned status code {resp.status_code}{RESET}")
+            sys.exit(1)
+            
+        try:
+            return resp.json()
+        except requests.exceptions.JSONDecodeError:
+            print(f"{RED}ERROR: Invalid response from Sonarr. Please check if your Sonarr URL is correct.{RESET}")
+            print(f"URL used: {url}")
+            sys.exit(1)
+            
+    except requests.exceptions.ConnectionError:
+        print(f"{RED}ERROR: Could not connect to Sonarr at {SONARR_URL}{RESET}")
+        print("Please check:")
+        print("1. If Sonarr is running")
+        print("2. If the URL in config.yml is correct")
+        print("3. If you can access Sonarr in your browser")
+        sys.exit(1)
+    except requests.exceptions.Timeout:
+        print(f"{RED}ERROR: Connection to Sonarr timed out. Please check if Sonarr is responding.{RESET}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"{RED}ERROR: Unexpected error while connecting to Sonarr: {str(e)}{RESET}")
+        sys.exit(1)
 
 def get_sonarr_episodes(series_id):
     url = f"{SONARR_URL}/episode?seriesId={series_id}&apikey={SONARR_API_KEY}"
