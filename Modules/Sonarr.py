@@ -70,7 +70,7 @@ def normalize_sonarr_url(url):
             url = f"{url}/api/v3"
         # If URL doesn't contain /sonarr at all, append /sonarr/api/v3
         elif '/sonarr' not in url:
-            url = f"{url}/sonarr/api/v3"
+            url = f"{url}/api/v3"
         # If URL contains /sonarr somewhere but not at the end, assume it's correct
     
     return url

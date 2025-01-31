@@ -6,7 +6,7 @@ import yaml
 from datetime import datetime, timedelta
 from pathlib import Path
 
-VERSION = '2.3'
+VERSION = '2.4'
 
 # Get the directory of the script being executed
 script_dir = Path(__file__).parent
