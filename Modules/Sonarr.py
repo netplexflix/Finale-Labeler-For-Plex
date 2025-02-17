@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 import yaml
@@ -12,7 +9,7 @@ from pathlib import Path
 from path_handler import PathHandler
 
 # Set up logging
-script_name = os.path.splitext(os.path.basename(__file__))[0]  # Get script name without extension
+script_name = os.path.splitext(os.path.basename(__file__))[0]
 logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Logs", script_name)
 os.makedirs(logs_dir, exist_ok=True)
 log_file = os.path.join(logs_dir, f"log_{dt.now().strftime('%Y%m%d_%H%M%S')}.txt")
@@ -20,7 +17,7 @@ log_file = os.path.join(logs_dir, f"log_{dt.now().strftime('%Y%m%d_%H%M%S')}.txt
 class Logger:
     def __init__(self, log_file):
         self.terminal = sys.stdout
-        self.log = open(log_file, "a", encoding="utf-8")  # Specify UTF-8 encoding
+        self.log = open(log_file, "a", encoding="utf-8")
 
     def write(self, message):
         self.terminal.write(message)
@@ -33,7 +30,6 @@ class Logger:
 sys.stdout = Logger(log_file)
 sys.stderr = Logger(log_file)
 
-# Clean up old logs
 def clean_old_logs():
     log_files = sorted(
         [os.path.join(logs_dir, f) for f in os.listdir(logs_dir) if f.startswith("log_")],
@@ -59,23 +55,16 @@ RED = '\033[31m'
 RESET = '\033[0m'
 
 def normalize_sonarr_url(url):
-    """Ensure Sonarr URL ends with /api/v3 but avoid doubling it."""
-    # Remove trailing slashes
     url = url.rstrip('/')
     
-    # Check if URL already ends with /api/v3
     if not url.endswith('/api/v3'):
-        # If URL ends with /sonarr, just append /api/v3
         if url.endswith('/sonarr'):
             url = f"{url}/api/v3"
-        # If URL doesn't contain /sonarr at all, append /sonarr/api/v3
         elif '/sonarr' not in url:
             url = f"{url}/api/v3"
-        # If URL contains /sonarr somewhere but not at the end, assume it's correct
     
     return url
 
-# Load configuration from config.yml in parent folder
 def load_config():
     current_dir = Path(__file__).parent
     config_path = current_dir.parent / "config.yml"
@@ -83,7 +72,6 @@ def load_config():
         with open(config_path, "r") as file:
             config = yaml.safe_load(file)
             
-            # Normalize Sonarr URL
             if 'sonarr' in config and 'url' in config['sonarr']:
                 config['sonarr']['url'] = normalize_sonarr_url(config['sonarr']['url'])
             else:
@@ -124,6 +112,7 @@ GENRES_TO_SKIP = config['general']['genres_to_skip']
 SKIP_LABELS = config['general']['skip_labels']
 LABELS_TO_SKIP = config['general']['labels_to_skip']
 LABEL_SERIES_IN_PLEX = config['general']['label_series_in_plex']
+LABEL_EPISODE_IN_PLEX = config['general']['label_episode_in_plex']
 PLEX_LABEL = config['general']['plex_label']
 REMOVE_LABELS_IF_NO_LONGER_MATCHED = config['general']['remove_labels_if_no_longer_matched']
 ONLY_FINALE_UNWATCHED = config['general']['only_finale_unwatched']
@@ -132,12 +121,10 @@ ONLY_FINALE_UNWATCHED = config['general']['only_finale_unwatched']
 #  Sonarr Finale Logic  #
 # ----------------------#
 def get_sonarr_series():
-    """Get all series from Sonarr with improved error handling."""
     try:
         url = f"{SONARR_URL}/series?apikey={SONARR_API_KEY}"
-        resp = requests.get(url, timeout=10)  # Add timeout
+        resp = requests.get(url, timeout=10)
         
-        # Handle common HTTP errors
         if resp.status_code == 401:
             print(f"{RED}ERROR: Invalid API key for Sonarr. Please check your config.yml{RESET}")
             sys.exit(1)
@@ -185,7 +172,6 @@ def is_episode_downloaded(season_number, episode_number, series_id):
     episode_files = resp.json()
     needle = f"s{season_number:02d}e{episode_number:02d}"
     for ef in episode_files:
-        # Map the path from Sonarr to local system
         relative_path = path_handler.map_path(ef.get('relativePath', ''))
         if needle in relative_path.lower() and ef.get('size', 0) > 0:
             return True
@@ -272,10 +258,10 @@ def build_plex_id_map(plex_shows):
     id_map = {}
     for show_obj in plex_shows:
         try:
-            show_obj = show_obj.reload()  # Fetch full show data, including all genres
+            show_obj = show_obj.reload()
         except Exception as e:
             print(f"{RED}ERROR: Failed to reload show '{show_obj.title}': {e}{RESET}")
-            continue  # Skip this show and proceed with others
+            continue
 
         for guid in show_obj.guids:
             raw_id = guid.id.lower()
@@ -343,28 +329,24 @@ def filter_shows_with_one_unwatched(finales_list, show_map):
         plex_show = get_plex_show_by_ids(imdb_id, tmdb_id, show_map)
         if plex_show:
             try:
-                # Get the specific season
                 season_obj = plex_show.season(snum)
                 if not season_obj:
                     continue
 
-                # Get the specific episode
                 try:
                     finale_ep = season_obj.episode(enum)
                 except Exception:
                     continue
 
-                # Check if the finale episode is unwatched
                 if finale_ep.isWatched:
-                    continue  # Finale episode is watched, skip
+                    continue
 
-                # Check if all other episodes are watched
                 all_others_watched = all(ep.isWatched for ep in season_obj.episodes() if ep != finale_ep)
 
                 if all_others_watched:
                     filtered.append(finale)
             except Exception:
-                continue  # Skip this show silently
+                continue
 
     return filtered
 
@@ -397,6 +379,7 @@ def remove_label_from_all_shows(label):
             remove_label_if_present(show_obj, label)
 
 def remove_label_only_unmatched(finales_downloaded, label):
+    print("\nChecking for Show labels to be removed..")
     plex = PlexServer(PLEX_URL, PLEX_TOKEN)
     tv_library = plex.library.section(PLEX_LIBRARY_TITLE)
     shows = tv_library.all()
@@ -418,7 +401,7 @@ def remove_label_only_unmatched(finales_downloaded, label):
                 remove_label_if_present(sh, label)
 
 def matched_shows(finales_downloaded, label):
-    """Add label to all matched shows in `finales_downloaded`."""
+    print("Checking for Show labels to be added..")
     plex = PlexServer(PLEX_URL, PLEX_TOKEN)
     tv_library = plex.library.section(PLEX_LIBRARY_TITLE)
     shows = tv_library.all()
@@ -437,16 +420,106 @@ def matched_shows(finales_downloaded, label):
     for s in matched:
         add_label_to_show(s, label)
 
+# -------------------------------#
+#   Episode labelling (writer)   #
+# -------------------------------#
+def add_writer_to_episode(episode_obj, label, show_title=None):
+    current_writers = [writer.tag for writer in episode_obj.writers]
+    if label in current_writers:
+        print(f"{GREEN}={RESET} Writer '{label}' already exists for S{episode_obj.seasonNumber:02d}E{episode_obj.index:02d} for show '{show_title or episode_obj.show().title}'")
+        return
+    print(f"{ORANGE}+{RESET} Adding writer '{label}' to S{episode_obj.seasonNumber:02d}E{episode_obj.index:02d} for show '{show_title or episode_obj.show().title}'")
+    episode_obj.addWriter(label)
+    episode_obj.reload()
+
+def remove_writer_from_episode(episode_obj, label, show_title=None):
+    current_writers = [writer.tag for writer in episode_obj.writers]
+    if label in current_writers:
+        print(f"{RED}-{RESET} Removing writer '{label}' from S{episode_obj.seasonNumber:02d}E{episode_obj.index:02d} for show '{show_title or episode_obj.show().title}'")
+        episode_obj.removeWriter(label)
+        episode_obj.reload()
+
+def remove_writer_from_unmatched_episodes(finales_downloaded, label):
+    print("\nChecking for Episode labels to be removed..")
+    
+    plex = PlexServer(PLEX_URL, PLEX_TOKEN)
+    tv_library = plex.library.section(PLEX_LIBRARY_TITLE)
+    shows = tv_library.all()
+    show_map = build_plex_id_map(shows)
+
+    matched_episodes = set()
+    for finale in finales_downloaded:
+        if len(finale) == 9:
+            _, snum, enum, _, _, tmdb_id, imdb_id, _, _ = finale
+        elif len(finale) == 8:
+            _, snum, enum, _, _, tmdb_id, imdb_id, _ = finale
+
+        plex_show = get_plex_show_by_ids(imdb_id, tmdb_id, show_map)
+        if plex_show:
+            matched_episodes.add((plex_show.ratingKey, snum, enum))
+
+    processed = set()
+
+    for show in shows:
+        show = show.reload()
+        
+        labeled_episodes = []
+        for episode in show.episodes():
+            if label in [writer.tag for writer in episode.writers]:
+                labeled_episodes.append(episode)
+
+        for episode in labeled_episodes:
+            episode_key = (show.ratingKey, episode.seasonNumber, episode.index)
+            
+            if episode_key in processed:
+                continue
+                
+            if episode_key not in matched_episodes:
+                remove_writer_from_episode(episode, label, show.title)
+                processed.add(episode_key)
+
+def label_matched_episodes(finales_downloaded, label):
+    print("\nChecking for Episode labels to be added..")
+    plex = PlexServer(PLEX_URL, PLEX_TOKEN)
+    tv_library = plex.library.section(PLEX_LIBRARY_TITLE)
+    shows = tv_library.all()
+    show_map = build_plex_id_map(shows)
+
+    for finale in finales_downloaded:
+        if len(finale) == 9:
+            _, snum, enum, _, _, tmdb_id, imdb_id, _, _ = finale
+        elif len(finale) == 8:
+            _, snum, enum, _, _, tmdb_id, imdb_id, _ = finale
+
+        plex_show = get_plex_show_by_ids(imdb_id, tmdb_id, show_map)
+        if plex_show:
+            try:
+                episode = plex_show.episode(season=snum, episode=enum)
+                add_writer_to_episode(episode, label)
+            except Exception as e:
+                print(f"{RED}ERROR: Failed to label episode S{snum:02d}E{enum:02d} for {plex_show.title}: {str(e)}{RESET}")
+
+# -------------------------------#
+#       Handle label logic       #
+# -------------------------------#
 def handle_label_logic(finales_downloaded):
+    # Handle show-level labels
     if not LABEL_SERIES_IN_PLEX:
         if REMOVE_LABELS_IF_NO_LONGER_MATCHED:
-            # Remove from ALL shows
             remove_label_from_all_shows(PLEX_LABEL)
     else:
-        # LABEL_SERIES_IN_PLEX == True
         matched_shows(finales_downloaded, PLEX_LABEL)
         if REMOVE_LABELS_IF_NO_LONGER_MATCHED:
             remove_label_only_unmatched(finales_downloaded, PLEX_LABEL)
+
+    # Handle episode-level labels
+    if LABEL_EPISODE_IN_PLEX:
+        label_matched_episodes(finales_downloaded, PLEX_LABEL)
+        if REMOVE_LABELS_IF_NO_LONGER_MATCHED:
+            remove_writer_from_unmatched_episodes(finales_downloaded, PLEX_LABEL)
+    else:
+        if REMOVE_LABELS_IF_NO_LONGER_MATCHED:
+            remove_writer_from_unmatched_episodes([], PLEX_LABEL) 
 
 # -----------------#
 #   TERMINAL RUN   #
@@ -463,6 +536,12 @@ if __name__ == "__main__":
         else:
             return f"{ORANGE}False{RESET}"
 
+    def color_bool_label_episode_in_plex():
+        if LABEL_EPISODE_IN_PLEX:
+            return f"{GREEN}True{RESET} ({PLEX_LABEL})"
+        else:
+            return f"{ORANGE}False{RESET}"
+		
     def color_bool_remove_labels():
         if REMOVE_LABELS_IF_NO_LONGER_MATCHED:
             return f"{GREEN}True{RESET}"
@@ -490,10 +569,12 @@ if __name__ == "__main__":
     print(f"Skip Unmonitored: {color_bool_generic(SKIP_UNMONITORED)}")
     print(f"Skip Genres: {color_bool_skip_genres()}")
     print(f"Skip Labels: {color_bool_skip_labels()}")
-    print(f"Label in Plex: {color_bool_label_in_plex()}")
+    print(f"Label Show in Plex: {color_bool_label_in_plex()}")
+    print(f"Label Episode in Plex: {color_bool_label_episode_in_plex()}")
     print(f"Remove Labels if No Longer Matched: {color_bool_remove_labels()}")
     print(f"Only Finale Unwatched: {color_bool_only_finale_unwatched()}")
     print("====================\n")
+    print("Searching for finales...")
 
     # Fetch recent finales from Sonarr
     finales_downloaded, finales_not_downloaded = get_recent_finales()
@@ -531,14 +612,12 @@ if __name__ == "__main__":
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored, is_future = finale
                     if is_future:
                         line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' "
-                                f"{BLUE}will air on {air_date}{RESET} | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                                f"{BLUE}will air on {air_date}{RESET}")
                     else:
-                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
-                                f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} ")
                 elif len(finale) == 8:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored = finale
-                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
-                            f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} ")
                 if not monitored and not SKIP_UNMONITORED:
                     line += f" {BLUE}(UNMONITORED){RESET}"
                 print(line)
@@ -550,24 +629,21 @@ if __name__ == "__main__":
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored, is_future = finale
                     if is_future:
                         line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' "
-                                f"{BLUE}will air on {air_date}{RESET} | TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                                f"{BLUE}will air on {air_date}{RESET}")
                     else:
-                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
-                                f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                        line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} ")
                 elif len(finale) == 8:
                     title, snum, enum, ep_title, air_date, tmdb_id, imdb_id, monitored = finale
-                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} "
-                            f"| TMDb ID: {tmdb_id} | IMDb ID: {imdb_id}")
+                    line = (f"- {title}: Season {snum} Episode {enum} '{ep_title}' aired on {air_date} ")
                 if not monitored and not SKIP_UNMONITORED:
                     line += f" {BLUE}(UNMONITORED){RESET}"
                 print(line)
 
     print()
     print("\n=== Label Operations ===")
-    # Label logic
     handle_label_logic(filtered_downloaded)
 
     end_time = time.time()
-    elapsed_seconds = int(end_time - start_time)  # Truncate decimals
+    elapsed_seconds = int(end_time - start_time)
     formatted_duration = str(datetime.timedelta(seconds=elapsed_seconds))
     print(f"Runtime: {formatted_duration}\n")

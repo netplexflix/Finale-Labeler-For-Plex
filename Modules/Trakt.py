@@ -16,7 +16,7 @@ RESET = '\033[0m'
 BOLD = '\033[1m'
 
 # Set up logging
-script_name = os.path.splitext(os.path.basename(__file__))[0]  # Get script name without extension
+script_name = os.path.splitext(os.path.basename(__file__))[0]
 logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Logs", script_name)
 os.makedirs(logs_dir, exist_ok=True)
 log_file = os.path.join(logs_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
@@ -24,7 +24,7 @@ log_file = os.path.join(logs_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S'
 class Logger:
     def __init__(self, log_file):
         self.terminal = sys.stdout
-        self.log = open(log_file, "a", encoding="utf-8")  # Specify UTF-8 encoding
+        self.log = open(log_file, "a", encoding="utf-8")
 
     def write(self, message):
         self.terminal.write(message)
@@ -48,13 +48,11 @@ def clean_old_logs():
 
 clean_old_logs()
 
-# ============================
+# ===================================
 # Load Configuration from config.yml
-# ============================
+# ==================================
 def load_config():
-    # Determine the directory where this script resides
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Construct the path to config.yml in the parent folder
     config_path = os.path.join(current_dir, "..", "config.yml")
     try:
         with open(config_path, "r") as file:
@@ -77,6 +75,7 @@ PLEX_LIBRARY_TITLE = config['plex']['library_title']
 
 RECENT_DAYS = config['general']['recent_days']
 LABEL_SERIES_IN_PLEX = config['general']['label_series_in_plex']
+LABEL_EPISODE_IN_PLEX = config['general']['label_episode_in_plex']
 REMOVE_LABELS_IF_NO_LONGER_MATCHED = config['general']['remove_labels_if_no_longer_matched']
 SKIP_GENRES = config['general']['skip_genres']
 GENRES_TO_SKIP = config['general']['genres_to_skip']
@@ -86,16 +85,13 @@ ONLY_FINALE_UNWATCHED = config['general']['only_finale_unwatched']
 
 
 # ============================
-# End of Configuration
+# Find Finales
 # ============================
 
 def normalize_plex_label(label):
     return label.capitalize()
 
 def connect_plex(plex_url, plex_token, library_title):
-    """
-    Connects to the Plex server and retrieves the specified library section.
-    """
     try:
         plex = PlexServer(plex_url, plex_token)
         library = plex.library.section(library_title)
@@ -105,9 +101,6 @@ def connect_plex(plex_url, plex_token, library_title):
         exit(1)
 
 def get_all_tv_shows(library):
-    """
-    Retrieves all TV shows from the specified Plex library section.
-    """
     try:
         shows = library.all()
         return shows
@@ -116,20 +109,14 @@ def get_all_tv_shows(library):
         return []
 
 def get_last_episode(show):
-    """
-    Determines the last episode of a TV show based on the highest season and episode numbers.
-    """
     try:
-        # Reload the show to ensure the latest data is fetched
         show.reload()
 
-        # Get all seasons and sort them by season number descending
         seasons = sorted(show.seasons(), key=lambda s: s.index, reverse=True)
         if not seasons:
             return None
 
         last_season = seasons[0]
-        # Get all episodes in the last season and sort them by episode number descending
         episodes = sorted(last_season.episodes(), key=lambda e: e.index, reverse=True)
         if not episodes:
             return None
@@ -145,9 +132,6 @@ def get_last_episode(show):
         return None
 
 def search_trakt_show(show_title, client_id):
-    """
-    Searches for a TV show on Trakt and retrieves its Trakt ID, slug, IMDb ID, and TMDB ID.
-    """
     search_url = "https://api.trakt.tv/search/show"
     headers = {
         "Content-Type": "application/json",
@@ -156,8 +140,8 @@ def search_trakt_show(show_title, client_id):
     }
     params = {
         "query": show_title,
-        "limit": 1,  # Fetch the top result
-        "extended": "full"  # Get full details
+        "limit": 1,
+        "extended": "full"
     }
 
     try:
@@ -168,12 +152,11 @@ def search_trakt_show(show_title, client_id):
         if not results:
             return None
 
-        # Extract the first result
         show = results[0]['show']
         trakt_id = show['ids'].get('trakt')
         slug = show['ids'].get('slug')
-        imdb_id = show['ids'].get('imdb')  # Extract IMDb ID
-        tmdb_id = show['ids'].get('tmdb')  # Extract TMDB ID
+        imdb_id = show['ids'].get('imdb')
+        tmdb_id = show['ids'].get('tmdb')
 
         return {
             'trakt_id': trakt_id,
@@ -193,9 +176,6 @@ def search_trakt_show(show_title, client_id):
     return None
 
 def get_episode_details(trakt_identifier, season, episode, client_id):
-    """
-    Retrieves the episode_type and first_aired date of a specific episode from Trakt.
-    """
     if isinstance(trakt_identifier, int):
         identifier = trakt_identifier
     else:
@@ -222,13 +202,10 @@ def get_episode_details(trakt_identifier, season, episode, client_id):
         first_aired_str = episode_details.get('first_aired')
 
         if first_aired_str:
-            # Handle both 'Z' and fractional seconds
             try:
-                # Example format: '2024-03-21T07:00:00.000Z'
                 first_aired = datetime.strptime(first_aired_str, "%Y-%m-%dT%H:%M:%S.%fZ")
             except ValueError:
                 try:
-                    # Example format without milliseconds: '2024-03-21T07:00:00Z'
                     first_aired = datetime.strptime(first_aired_str, "%Y-%m-%dT%H:%M:%SZ")
                 except ValueError:
                     print(f"{RED}Unable to parse date '{first_aired_str}' for Trakt episode.{RESET}")
@@ -248,58 +225,71 @@ def get_episode_details(trakt_identifier, season, episode, client_id):
 
     return None
 
+# ============================
+# Labelling logic (show)
+# ============================
 def add_label_to_show(show, label):
-    """
-    Adds a label to the given Plex show using the addLabel method.
-    """
     try:
-        # Reload the show to ensure the latest labels are fetched
         show.reload()
 
-        # Extract label tags as strings
         existing_labels = [lab.tag for lab in show.labels]
 
-        # Check if the label already exists
         if label in existing_labels:
-            return False  # Label already exists; do nothing
+            return False
 
-        # Add the label using the addLabel method
         show.addLabel(label)
-        return True  # Indicate that label was added
+        return True
 
     except AttributeError:
         print(f"{RED}The 'addLabel' method does not exist for show '{show.title}'. Please verify the Plex API version and method availability.{RESET}")
     except Exception as e:
         print(f"{RED}Failed to add label '{label}' to show '{show.title}': {e}{RESET}")
 
-    return False  # Indicate that label was not added
+    return False
 
 def remove_label_from_show(show, label):
-    """
-    Removes a label from the given Plex show using the removeLabel method.
-    """
     try:
-        # Reload the show to ensure the latest labels are fetched
         show.reload()
 
-        # Extract label tags as strings
         existing_labels = [lab.tag for lab in show.labels]
 
-        # Check if the label exists
         if label not in existing_labels:
-            return False  # Label does not exist; do nothing
+            return False
 
-        # Remove the label using the removeLabel method
+
         show.removeLabel(label)
-        return True  # Indicate that label was removed
+        return True
 
     except AttributeError:
         print(f"{RED}The 'removeLabel' method does not exist for show '{show.title}'. Please verify the Plex API version and method availability.{RESET}")
     except Exception as e:
         print(f"{RED}Failed to remove label '{label}' from show '{show.title}': {e}{RESET}")
 
-    return False  # Indicate that label was not removed
+    return False
 
+# ============================
+# Labelling logic (Episode)
+# ============================
+def add_writer_to_episode(episode_obj, label):
+    current_writers = [writer.tag for writer in episode_obj.writers]
+    if label in current_writers:
+        print(f"{GREEN}= Writer '{label}' already exists for S{episode_obj.seasonNumber:02d}E{episode_obj.index:02d} for show '{episode_obj.show().title}'{RESET}")
+        return False
+    episode_obj.addWriter(label)
+    episode_obj.reload()
+    return True
+
+def remove_writer_from_episode(episode_obj, label):
+    current_writers = [writer.tag for writer in episode_obj.writers]
+    if label in current_writers:
+        episode_obj.removeWriter(label)
+        episode_obj.reload()
+        return True
+    return False
+
+# ============================
+# Main
+# ============================
 def main():
     # Start runtime timer
     start_time = time.time()
@@ -317,14 +307,15 @@ def main():
     label_color = GREEN if SKIP_LABELS else ORANGE
     print(f"Skip Labels: {label_color}{SKIP_LABELS}{RESET}  {LABELS_TO_SKIP}")
 
-    # For the remaining boolean configuration variables, print using colors
-    def print_bool(var_name, var_value):
+    def print_bool_with_label(var_name, var_value, label=None):
         color = GREEN if var_value else ORANGE
-        print(f"{var_name}: {color}{var_value}{RESET}")
+        label_text = f" ({label})" if var_value and label else ""
+        print(f"{var_name}: {color}{var_value}{RESET}{label_text}")
 
-    print_bool("Label in Plex:", LABEL_SERIES_IN_PLEX)
-    print_bool("Remove Labels if No Longer Matched:", REMOVE_LABELS_IF_NO_LONGER_MATCHED)
-    print_bool("Only Finale Unwatched:", ONLY_FINALE_UNWATCHED)
+    print_bool_with_label("Label Series in Plex:", LABEL_SERIES_IN_PLEX)
+    print_bool_with_label("Label Episodes in Plex:", LABEL_EPISODE_IN_PLEX)
+    print_bool_with_label("Remove Labels if No Longer Matched:", REMOVE_LABELS_IF_NO_LONGER_MATCHED)
+    print_bool_with_label("Only Finale Unwatched:", ONLY_FINALE_UNWATCHED)
     print("====================\n")
 
     # Step 2: Connect to Plex and retrieve the library section
@@ -349,28 +340,30 @@ def main():
     labels_added = []
     labels_existed = []
     labels_removed = []
+    episode_labels_added = []
+    episode_labels_existed = []
+    episode_labels_removed = []
+    episodes_to_label = []
 
-    for show in tqdm(shows, desc="Processing Shows"):
+    for show in tqdm(shows, desc="Processing Shows", bar_format='{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'):
         show_title = show.title
         # Reload the show to ensure the latest labels and metadata are fetched
         try:
             show.reload()
         except Exception as e:
-            # Optionally log the error or handle it silently
             continue
 
         # Apply Skipping Logic
         if SKIP_GENRES:
             show_genres = [genre.tag for genre in show.genres] if show.genres else []
-            # Clean genre names by stripping any leading/trailing whitespace
             show_genres = [genre.strip() for genre in show_genres]
             if any(genre in GENRES_TO_SKIP for genre in show_genres):
-                continue  # Skip this show
+                continue
 
         if SKIP_LABELS:
             show_labels = [lab.tag for lab in show.labels]
             if any(label in LABELS_TO_SKIP for label in show_labels):
-                continue  # Skip this show
+                continue
 
         # Get the last episode details
         last_episode = get_last_episode(show)
@@ -386,8 +379,8 @@ def main():
 
         trakt_id = trakt_info['trakt_id']
         trakt_slug = trakt_info['slug']
-        imdb_id = trakt_info.get('imdb_id')  # Retrieve IMDb ID
-        tmdb_id = trakt_info.get('tmdb_id')  # Retrieve TMDB ID
+        imdb_id = trakt_info.get('imdb_id')
+        tmdb_id = trakt_info.get('tmdb_id')
 
         # Fetch episode_type and first_aired from Trakt
         episode_details = get_episode_details(trakt_slug, season_number, episode_number, TRAKT_CLIENT_ID)
@@ -402,44 +395,32 @@ def main():
 
         # Determine if the episode has already aired or will air
         if first_aired <= datetime.now():
-            # Episode has already aired; check if within RECENT_DAYS
             if first_aired < cutoff_past:
-                continue  # Skip episodes aired before the cutoff
+                continue
             air_status = f"aired on {first_aired.strftime('%Y-%m-%d')}"
         else:
-            # Episode is scheduled to air in the future; include regardless of days
             air_status = f"{BLUE}will air on{RESET} {first_aired.strftime('%Y-%m-%d')}"
 
         # Check if episode_type is one of the desired types
         if episode_type and episode_type.lower() in [etype.lower() for etype in DESIRED_EPISODE_TYPES]:
-            # If ONLY_FINALE_UNWATCHED is True, check if finale is the only unwatched episode in the season
+            # Handle ONLY_FINALE_UNWATCHED check
             if ONLY_FINALE_UNWATCHED:
                 try:
-                    # Get the specific season
                     season_obj = show.season(season_number)
                     if not season_obj:
                         continue
 
-                    # Get the specific episode
-                    try:
-                        finale_ep = season_obj.episode(episode_number)
-                    except Exception:
+                    finale_ep = season_obj.episode(episode_number)
+                    if finale_ep.isWatched:
                         continue
 
-                    # Check if the finale episode is unwatched
-                    if finale_ep.isWatched:
-                        continue  # Finale episode is watched, skip
-
-                    # Check if all other episodes are watched
                     all_others_watched = all(ep.isWatched for ep in season_obj.episodes() if ep != finale_ep)
-
                     if not all_others_watched:
-                        continue  # There are other unwatched episodes, skip
-                except Exception as e:
-                    # Optionally log the error or handle it silently
+                        continue
+                except Exception:
                     continue
 
-            # Append to qualifying shows
+            # Add to qualifying shows
             qualifying_shows.append({
                 "title": show_title,
                 "season": season_number,
@@ -447,118 +428,134 @@ def main():
                 "episode_title": episode_title,
                 "episode_type": episode_type,
                 "air_status": air_status,
-                "imdb_id": imdb_id,   # Add IMDb ID
-                "tmdb_id": tmdb_id    # Add TMDB ID
+                "imdb_id": imdb_id,
+                "tmdb_id": tmdb_id
             })
 
-            # Apply label to the show if enabled
+            # Handle show-level labeling
             if LABEL_SERIES_IN_PLEX:
-                # Define the label based on episode_type (normalize to Plex case behavior)
                 label = normalize_plex_label(episode_type)
-
-                # Reload the show again to ensure we get the latest labels
                 show.reload()
-
-                # Check if the desired label already exists
-                current_labels = [lab.tag.capitalize() for lab in show.labels]  # Normalize to Plex capitalization
+                current_labels = [lab.tag.capitalize() for lab in show.labels]
+                
                 if label in current_labels:
                     labels_existed.append((show_title, label))
                 else:
-                    # Remove any existing labels from DESIRED_EPISODE_TYPES but not the current label
+                    # Remove any existing labels from DESIRED_EPISODE_TYPES
                     labels_to_remove = [
                         lab for lab in current_labels
-                        if lab in [normalize_plex_label(etype) for etype in DESIRED_EPISODE_TYPES] and lab != label
+                        if lab in [normalize_plex_label(etype) for etype in DESIRED_EPISODE_TYPES] 
+                        and lab != label
                     ]
                     for existing_label in labels_to_remove:
                         removed = remove_label_from_show(show, existing_label)
                         if removed:
                             labels_removed.append((show_title, existing_label))
+                    
                     # Add the new label
                     label_added = add_label_to_show(show, label)
                     if label_added:
                         labels_added.append((show_title, label))
-        # Optional: To prevent hitting Trakt rate limits, add a short delay
-        time.sleep(0.5)  # Sleep for 0.5 seconds
+
+            # Handle episode-level labeling
+            if LABEL_EPISODE_IN_PLEX:
+                try:
+                    episode_obj = show.episode(season=season_number, episode=episode_number)
+                    episodes_to_label.append({
+                        'episode': episode_obj,
+                        'show_title': show_title,
+                        'season': season_number,
+                        'episode_num': episode_number,
+                        'label': normalize_plex_label(episode_type)
+                    })
+                except Exception as e:
+                    print(f"{RED}Error accessing episode for '{show_title}' S{season_number:02d}E{episode_number:02d}: {e}{RESET}")
+
+        # Optional: To prevent hitting Trakt rate limits
+        time.sleep(0.5)
 
 
-    # Step 6: Remove labels from shows if configured to do so
-    if REMOVE_LABELS_IF_NO_LONGER_MATCHED:
-        try:
-            # If LABEL_SERIES_IN_PLEX is False, remove all labels in DESIRED_EPISODE_TYPES from all shows
-            if not LABEL_SERIES_IN_PLEX:
-                for show in shows:
-                    show.reload()  # Ensure we have the latest metadata
-                    current_labels = [lab.tag for lab in show.labels]
-                    labels_to_remove = [
-                        lab for lab in current_labels
-                        if normalize_plex_label(lab) in [normalize_plex_label(etype) for etype in DESIRED_EPISODE_TYPES]
-                    ]
-                    for label in labels_to_remove:
-                        try:
-                            removed = remove_label_from_show(show, label)
-                            if removed:
-                                labels_removed.append((show.title, label))
-                        except Exception as e:
-                            print(f"{RED}Error removing label '{label}' from show '{show.title}': {e}{RESET}")
-            else:
-                # Standard logic: Remove outdated labels for non-qualifying shows
-                qualifying_show_titles = set([show['title'] for show in qualifying_shows])
-                for show in shows:
-                    show.reload()  # Ensure we have the latest metadata
-                    current_labels = [lab.tag for lab in show.labels]
-                    labels_to_remove = [
-                        lab for lab in current_labels
-                        if normalize_plex_label(lab) in [normalize_plex_label(etype) for etype in DESIRED_EPISODE_TYPES]
-                        and show.title not in qualifying_show_titles
-                    ]
-                    for label in labels_to_remove:
-                        try:
-                            removed = remove_label_from_show(show, label)
-                            if removed:
-                                labels_removed.append((show.title, label))
-                        except Exception as e:
-                            print(f"{RED}Error removing label '{label}' from show '{show.title}': {e}{RESET}")
-        except Exception as e:
-            print(f"{RED}An error occurred while removing outdated labels: {e}{RESET}")
-
-    # Step 7: Display the qualifying shows
+    # Step 6: Display the qualifying shows
     if qualifying_shows:
         print(f"\n{GREEN}=== Qualifying TV Shows with Finale Episodes === {RESET}")
         for item in qualifying_shows:
             imdb_display = item['imdb_id'] if item['imdb_id'] else "N/A"
             tmdb_display = item['tmdb_id'] if item['tmdb_id'] else "N/A"
-            print(f"{item['title']} (TMDB: {tmdb_display}, IMDB: {imdb_display}): "
+            print(f"{item['title']} "
                   f"Season {item['season']} Episode {item['episode']} '{item['episode_title']}' "
                   f"({item['episode_type']}) {item['air_status']}")
     else:
         print(f"\n{BLUE}No TV shows found matching criteria.{RESET}")
         print("========================\n")
 
-    # Step 8: Display label operations
+    # Step 7: Display label operations
     print("\n=== Label Operations ===")
-
-    if LABEL_SERIES_IN_PLEX or REMOVE_LABELS_IF_NO_LONGER_MATCHED:
-        # Display labels added
-        if labels_added:
-            for title, label in labels_added:
-                print(f"{GREEN}+ Added label '{label}' to show '{title}'{RESET}")
-        
-        # Display labels that already existed
-        if labels_existed:
-            for title, label in labels_existed:
-                print(f"{ORANGE}= Label '{label}' already exists for show '{title}'{RESET}")
-        
-        # Display labels removed
-        if labels_removed:
-            for title, label in labels_removed:
-                print(f"{RED}- Removed label '{label}' from show '{title}'{RESET}")
-
-    # Step 9: Print runtime
+    
+    # Show-level label operations
+    print("Processing show-level labels...")
+    if LABEL_SERIES_IN_PLEX:
+        for show_data in qualifying_shows:
+            try:
+                show = next(s for s in shows if s.title == show_data['title'])
+                label = normalize_plex_label(show_data['episode_type'])
+                
+                current_labels = [lab.tag.capitalize() for lab in show.labels]
+                if label in current_labels:
+                    print(f"{ORANGE}={RESET} Label '{label}' already exists for show '{show.title}'")
+                else:
+                    print(f"{GREEN}+{RESET} Adding label '{label}' to show '{show.title}'")
+                    if add_label_to_show(show, label):
+                        pass 
+            except StopIteration:
+                print(f"{RED}Error: Could not find show '{show_data['title']}' in Plex library{RESET}")
+            except Exception as e:
+                print(f"{RED}Error processing show '{show_data['title']}': {str(e)}{RESET}")
+    elif REMOVE_LABELS_IF_NO_LONGER_MATCHED:
+        for show in shows:
+            show.reload()
+            current_labels = [lab.tag for lab in show.labels]
+            labels_to_remove = [
+                lab for lab in current_labels
+                if normalize_plex_label(lab) in [normalize_plex_label(etype) 
+                                               for etype in DESIRED_EPISODE_TYPES]
+            ]
+            for label in labels_to_remove:
+                if remove_label_from_show(show, label):
+                    print(f"{RED}-{RESET} Removing label '{label}' from show '{show.title}'")
+    
+    # Episode-level label operations
+    print("\nProcessing episode-level labels...")
+    if LABEL_EPISODE_IN_PLEX:
+        for ep_data in episodes_to_label:
+            episode_obj = ep_data['episode']
+            label = ep_data['label']
+            
+            current_writers = [writer.tag for writer in episode_obj.writers]
+            if label in current_writers:
+                print(f"{ORANGE}={RESET} Writer '{label}' already exists for S{ep_data['season']:02d}E{ep_data['episode_num']:02d} for show '{ep_data['show_title']}'")
+            else:
+                if add_writer_to_episode(episode_obj, label):
+                    print(f"{GREEN}+{RESET} Adding writer '{label}' to S{ep_data['season']:02d}E{ep_data['episode_num']:02d} for show '{ep_data['show_title']}'")
+    elif REMOVE_LABELS_IF_NO_LONGER_MATCHED:
+        for show in shows:
+            show.reload()
+            for episode in show.episodes():
+                current_writers = [writer.tag for writer in episode.writers]
+                labels_to_remove = [
+                    lab for lab in current_writers
+                    if normalize_plex_label(lab) in [normalize_plex_label(etype) 
+                                                   for etype in DESIRED_EPISODE_TYPES]
+                ]
+                for label in labels_to_remove:
+                    if remove_writer_from_episode(episode, label):
+                        print(f"{RED}-{RESET} Removing writer '{label}' from S{episode.seasonNumber:02d}E{episode.index:02d} for show '{show.title}'")
+    
+    # Step 8: Print runtime
     end_time = time.time()
     runtime_seconds = int(end_time - start_time)
     hours, remainder = divmod(runtime_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    print(f"Runtime: {hours:02}:{minutes:02}:{seconds:02}")
+    print(f"\nRuntime: {hours:02}:{minutes:02}:{seconds:02}")
 
 if __name__ == "__main__":
         main()
