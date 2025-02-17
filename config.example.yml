@@ -30,6 +30,7 @@ general:
     - "Skip"
     - "Exclude"
   label_series_in_plex: true
+  label_episode_in_plex: false
   plex_label: "Finale"
   remove_labels_if_no_longer_matched: true
   only_finale_unwatched: false
