@@ -1,4 +1,6 @@
 # 📺 Finale Labeler for Plex ✅
+>[!NOTE]
+> The functionality of this script has been consolidated in [TV Show Status for Kometa](https://github.com/netplexflix/TV-show-status-for-Kometa)
 
 This script checks your Plex TV library and lists your TV shows for which a (season) finale is present which aired within the set timeframe, <br/>
 and optionally labels/unlabels these shows in Plex based on chosen criteria.<br/>
